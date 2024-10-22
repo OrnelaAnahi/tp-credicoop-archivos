@@ -1,0 +1,25 @@
+- hosts: vm2
+  become: yes
+  tasks:
+    - name: Verificar conectividad con el servidor
+      ping:
+
+    - name: Crear directorio para almacenar backups
+      file:
+        path: /home/user/backupMatomo
+        state: directory
+        mode: '0755'
+
+    - name: Realizar backup de la base de datos MariaDB
+      shell: >
+         docker exec matomo-mariadb-1 mysqldump -u bn_matomo bitnami_matomo > /home/user/backupMatomo/matomo_db_backup.sql
+
+    - name: Verificar que el archivo de backup de la base de datos exista
+      stat:
+        path: /home/user/backupMatomo/matomo_db_backup.sql
+      register: db_backup_file
+
+    - name: Asegurarse de que el backup de la base de datos existe
+      fail:
+        msg: "El archivo de backup de la base de datos no fue creado."
+      when: db_backup_file.stat.exists == False

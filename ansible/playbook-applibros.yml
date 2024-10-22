@@ -1,0 +1,42 @@
+- name: Escalar aplicación de libros en Minikube
+  hosts: vm2
+  become: true
+  environment:
+    PYTHONPATH: "/home/user/.local/lib/python3.9/site-packages"
+  tasks:
+    - name: Escalar el deployment de app-libros a 5 réplicas
+      k8s:
+        state: present
+        kubeconfig: /home/user/.kube/config
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: app-libros
+            namespace: default
+          spec:
+            replicas: 5
+            selector:
+              matchLabels:
+                app: applibros
+            template:
+              metadata:
+                labels:
+                  app: applibros
+              spec:
+                containers:
+                - name: applibros
+                  image: ornelaanahi/applibros
+                  ports:
+                  - containerPort: 8080
+                  env:
+                  - name: hibernate__hbm2ddl__auto
+                    value: "create"
+                  - name: javax__persistence__jdbc__driver
+                    value: "org.postgresql.Driver"
+                  - name: javax__persistence__jdbc__password
+                    value: "123"
+                  - name: javax__persistence__jdbc__url
+                    value: "jdbc:postgresql://dbservice/dblibros"
+                  - name: javax__persistence__jdbc__user
+                    value: "postgres"
